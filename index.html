@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Fiangonana</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <style>
+    #map { height: 100vh; width: 100%; }
+    .cluster-icon {
+      background: orange;
+      color: white;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      border: 2px solid white;
+      box-shadow: 0 0 3px #555;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+<script src="churches.js"></script>
+<script>
+const map = L.map('map');
+
+// Basemap
+L.tileLayer('https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap contributors',
+  subdomains: 'abcd',
+  maxZoom: 20
+}).addTo(map);
+
+// Test user location
+const userLocation = [-18.9, 47.55];
+const userCircle = L.circle(userLocation, { color: 'red', radius: 50 }).addTo(map);
+
+// Define dioceses
+const dioceses = {
+  Antananarivo: "Arsidiosezin'Antananarivo",
+  Fianarantsoa: "Diosezin'i Fianarantsoa"
+};
+
+// Define districts
+const districts = {
+  Mangasoavina: "Distrikan'i Mangasoavina",
+  Andohalo: "Distrikan'Andohalo"
+};
+
+// Grouping
+const zoneGroups = {};
+const dioceseGroups = {};
+
+churches.forEach(([name, lat, lon, massHours, districtKey, dioceseKey]) => {
+  // Group by district (zone-level clusters)
+  if (!zoneGroups[districtKey]) zoneGroups[districtKey] = [];
+  zoneGroups[districtKey].push({ name, lat, lon, massHours, dioceseKey });
+
+  // Group by diocese (higher-level clusters)
+  if (!dioceseGroups[dioceseKey]) dioceseGroups[dioceseKey] = [];
+  dioceseGroups[dioceseKey].push({ name, lat, lon, massHours, districtKey });
+});
+
+let currentMarkers = [];
+
+function clearMarkers() {
+  currentMarkers.forEach(m => map.removeLayer(m));
+  currentMarkers = [];
+}
+
+function showIndividualMarkers() {
+  clearMarkers();
+  churches.forEach(([name, lat, lon, massHours]) => {
+    const marker = L.marker([lat, lon]).addTo(map);
+    const popupContent = `
+    <strong>${name}</strong><br>
+    ${massHours}<br>
+    `;
+    // <button onclick="window.open('https://www.google.com/maps/dir/${userLocation[0]},${userLocation[1]}/${lat},${lon}/', '_blank')">Lalana</button>
+    marker.bindPopup(popupContent);
+    currentMarkers.push(marker);
+  });
+}
+
+function zoomCluster(marker, clusterChurches, targetZoom) {
+  const n = clusterChurches.length;
+  const latSum = clusterChurches.reduce((sum, ch) => sum + ch.lat, 0);
+  const lonSum = clusterChurches.reduce((sum, ch) => sum + ch.lon, 0);
+  const center = [latSum / n, lonSum / n];
+
+  map.setView(center, targetZoom);
+}
+
+// Diocese clusters
+function showDioceseClusters() {
+  clearMarkers();
+  Object.entries(dioceseGroups).forEach(([dioceseKey, dioChurches]) => {
+    const n = dioChurches.length;
+    const latSum = dioChurches.reduce((sum, ch) => sum + ch.lat, 0);
+    const lonSum = dioChurches.reduce((sum, ch) => sum + ch.lon, 0);
+    const center = [latSum / n, lonSum / n];
+
+    const clusterMarker = L.marker(center, {
+      icon: L.divIcon({
+        html: `<div class="cluster-icon">${n}</div>`,
+        className: ''
+      })
+    }).addTo(map);
+
+    clusterMarker.on('click', () => {
+      if (map.getZoom() <= 9) {
+        zoomCluster(clusterMarker, dioChurches, 13);
+      }
+    });
+
+    currentMarkers.push(clusterMarker);
+  });
+}
+
+// District clusters
+function showZoneClusters() {
+  clearMarkers();
+  Object.entries(zoneGroups).forEach(([districtKey, districtChurches]) => {
+    const n = districtChurches.length;
+    const latSum = districtChurches.reduce((sum, ch) => sum + ch.lat, 0);
+    const lonSum = districtChurches.reduce((sum, ch) => sum + ch.lon, 0);
+    const center = [latSum / n, lonSum / n];
+
+    const clusterMarker = L.marker(center, {
+      icon: L.divIcon({
+        html: `<div class="cluster-icon">${n}</div>`,
+        className: ''
+      })
+    }).addTo(map);
+
+    clusterMarker.on('click', () => {
+      if (map.getZoom() > 9 && map.getZoom() <= 13) {
+        zoomCluster(clusterMarker, districtChurches, 14);
+      }
+    });
+
+    currentMarkers.push(clusterMarker);
+  });
+}
+
+// Auto-fit all churches in Madagascar
+const bounds = L.latLngBounds(churches.map(ch => [ch[1], ch[2]]));
+map.fitBounds(bounds);
+
+// Initial display
+function updateMarkers() {
+  console.log("Current zoom:", map.getZoom());
+  if (map.getZoom() > 13) {
+    showIndividualMarkers();
+  } else if (map.getZoom() > 9) {
+    showZoneClusters();
+  } else {
+    showDioceseClusters();
+  }
+}
+updateMarkers();
+map.on('zoomend', updateMarkers);
+
+</script>
+</body>
+</html>
