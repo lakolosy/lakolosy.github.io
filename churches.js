@@ -9,5 +9,8 @@ const churches = [
   ["Ekar Faravohitra", -18.904749836370616, 47.52802031271467, "Sabotsy: 17:30 <br>Alahady: 07:00, 09:00, 18:00","Andohalo","Antananarivo"],
   ["Ekar Antanimena", -18.89822785120746, 47.52263078643001, "Sabotsy: 17:30 <br>Alahady: 07:00, 09:00, 18:00","Andohalo","Antananarivo"],
   ["Ekar Antohomadinika", -18.897955418197643, 47.514951834586846, "Sabotsy: 17:30 <br>Alahady: 07:00, 09:00, 18:00","Andohalo","Antananarivo"],
-  ["Chapelle Betongolo", -18.905160986116083, 47.53837580639343, "Sabotsy: 17:30 <br>Alahady: 07:00, 09:00, 18:00","Andohalo","Antananarivo"]
+  ["Chapelle Betongolo", -18.905160986116083, 47.53837580639343, "Sabotsy: 17:30 <br>Alahady: 07:00, 09:00, 18:00","Andohalo","Antananarivo"],
+  ["Ekar Antsiranana", -12.273860838936557, 49.293274816482516, "Sabotsy: 17:30 <br>Alahady: 07:00, 09:00, 18:00","Antsiranana","Antsiranana"],
+  ["Ekar Antsiranana", -12.292162599152011, 49.2927121976791, "Sabotsy: 17:30 <br>Alahady: 07:00, 09:00, 18:00","Antsiranana","Antsiranana"],
+  ["Ekar Taolagnaro", -25.031884554818063, 46.9946735360718, "Sabotsy: 17:30 <br>Alahady: 07:00, 09:00, 18:00","Taolagnaro","Taolagnaro"],
 ];
